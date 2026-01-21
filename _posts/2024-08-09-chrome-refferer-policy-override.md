@@ -1,8 +1,8 @@
 ---
 title: "Chrome Referrer-Policy override Cross-Site data leak and strict CSP bypass"
 date: 2024-08-09 12:01:00 +0800
-categories: [Novel Technique]
-tags: CSP Referrer-Policy XS-Leak
+categories: [Novel Techniques]
+tags: CSP Referrer-Policy XS-Leak Research
 ---
 
 One of discoveries of this research was that it is possible to chain few functionalities and misconfigurations together in order to achieve Cross-Site (XS) leak with HTML injection, while strict <span style="color:lightblue;">Content-Security-Policy</span> (CSP) is present.  This abuse is possible due to the Chrome following RFC strictly.
