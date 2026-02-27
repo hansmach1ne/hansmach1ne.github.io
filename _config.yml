@@ -16,10 +16,10 @@ timezone:
 
 title: Mateo Hanžek's Security blog # the main title
 
-tagline: Pentesting, red teaming & security research # it will display as the subtitle
+tagline: Pentesting & security research # it will display as the subtitle
 
 description: >- # used by seo meta and the atom feed
-  Pentesting, red teaming, security research blogspot.
+  Pentesting & security research blogspot.
 
 # Fill in the protocol & hostname for your site.
 # E.g. 'https://username.github.io', note that it does not end with a '/'.

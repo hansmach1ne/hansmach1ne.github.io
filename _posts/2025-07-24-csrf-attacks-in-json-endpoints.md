@@ -1,5 +1,5 @@
 ---
-title: "CSRF in GQL and REST APIs - Attack and defend JSON endpoints"
+title: "CSRF in GraphQL and REST APIs - Attack and defend JSON endpoints"
 date: 2025-07-24 02:26:00 +0800
 categories: [Pen test tips & tricks]
 tags: CSRF CORS Attack-GraphQL-APIs Attack-REST-APIs
