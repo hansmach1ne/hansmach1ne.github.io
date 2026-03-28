@@ -10,9 +10,11 @@ Its purpose is to demonstrate how a single, average but a dedicated attacker mig
 
 The first blog in the series relates to [Ajenti Control Panel](https://github.com/ajenti/ajenti), a Python based server admin panel designed to be run on Linux systems. It's used to administer servers, deploy websites and much more. The identified and disclosed vulnerabilities include:
 
-- CVE-2026-XXXXX - Password based authentication bypass by doing nothing at all
-- CVE-2026-XXXXX - Two ways to bypass Two Factor Authentication
-- CVE-2026-XXXXX - Unauthenticated single request Denial of Service
+- Password based authentication bypass by doing nothing at all
+- Two ways to bypass Two Factor Authentication
+- Unauthenticated single request Denial of Service
+
+Note, these vulnerabilities are reported to and mitigated by the vendor several months ago. CVE assignment for these vulnerabilities is on hold, as CVE reporting on [Mitre CVEForm](https://cveform.mitre.org/) website seems to be delayed.
 
 ### Bypass password-based authentication by doing nothing at all
 
@@ -49,7 +51,7 @@ The following code is responsible for the first step of the auth flow, the passw
                 }
 ```
 
-The client-side sends the JSON `mode` parameter, which will be set to `normal` in the first step. The backend checks if the credentials supplied are correct. If they are, and if the TFA is activated for the user, the JSON message returned:
+The client-side sends the JSON `mode` parameter, which will be set to `normal` in the first step. The backend checks if the credentials supplied are correct. If they are correct; and if the TFA is activated for the user, the JSON message returned:
 
 ```
 {
@@ -59,7 +61,7 @@ The client-side sends the JSON `mode` parameter, which will be set to `normal` i
 }
  ```
 
-Note, that the backend doesn't return any unique token, proving that the user correctly passed this step. This is an indication of the password check, implemented on the client-side - but only when the TFA is activated for the user. This in turn means, that user's security is lowered if they have multi factor authentication implemented.
+Note, that the backend doesn't return any unique token, which is a 'proof' that the user correctly passed this step. This is an indication of the password check, implemented on the client-side - but only when the TFA is activated for the user. This in turn means, that user's security is lowered if they have multi factor authentication implemented.
 
 Let's confirm the issue and check how the second step of the authentication flow (TFA) is implemented:
 
@@ -77,7 +79,7 @@ elif mode == 'totp':
                 }
 ```
 
-From the above snippet, we can see that `verify_totp` method takes `user_auth_id` (username) and a `password` information. Let's try to send username and OTP directly to this endpoint:
+From the above snippet, we can see that `verify_totp` method takes `user_auth_id` (username) and a `password` information. Let's try to send username and correct OTP code directly to this endpoint:
 
 Consume second step of the auth flow directly:
 
@@ -124,14 +126,14 @@ Attacker can retrieve the session with only TFA code and username, without valid
 
 ### Two ways to bypass Two Factor Authentication
 
-The first way is a bit boring - by brute forcing. Since the second factor is a Google TOTP, a 6 digit number; it is therefore to trivially brute force it in a reasonable time (at most a few days). Nothing in the Ajenti's code prevents attackers from doing so, appart from a small friction posed by the greenlet delay, after the TFA code check
+The first way is a bit boring - by brute forcing. Since the second factor is a Google TOTP, a 6 digit number; it is therefore possible to trivially brute force it in a reasonable time. Nothing in the Ajenti's code prevents attackers from doing so, appart from a small friction posed by the greenlet delay, after the TFA code check:
 
 ```
 self.context.worker.verify_totp(user_auth_id, password)
 gevent.sleep(0.3)
 ```
 
-This won't prevent brute force, as the delay is present only for the current request. This means, attacker can send many requests per second, each being delayed for a fraction of a second. It won't be enough to prevent a brute force attack, however it will only slightly delay response for each of the requests.
+This won't prevent brute force, as the delay is present only for the current request. This means, attacker can send many requests per second, each being delayed for a fraction of a second. It won't be enough to prevent a brute force attack, however it will only slightly delay response for each of the requests. Attackers can send as many requests as they want.
 
 ### TFA bypass via race condition
 
@@ -187,7 +189,7 @@ Upstream reader implementation:
 ...
 ```
 
-The usptream reader forwards the authentication info to the middleware worker, with the session key. I think this session key is responsible to distinct that the message came from the ajenti subprocess, which will always be correct in our case.
+The usptream reader forwards the authentication info to the middleware worker, with the session key. I think this session key is responsible to distinct that the message came from the ajenti subprocess, which will always be correct in our attack.
 
 The middleware `verify_totp` implementation:
 
@@ -200,7 +202,7 @@ The middleware `verify_totp` implementation:
                 session.gate.verify_totp(userid, code)
 ```
 
-Middleware is esentially a wrapper which calls `gate.verify_totp`:
+Middleware is therefore esentially a wrapper which calls `gate.verify_totp`:
 
 ```python
     def verify_totp(self, userid, code):
@@ -230,7 +232,7 @@ This is the actual TFA code check. The result (boolean) is sent upstream to `wor
 
 The TFA result is stored within the `aj.tfa_config.verify_totp` array, which holds authentication attempt results for all users.
 
-<span style="color:orange;">And this is the exact point where the vulnerability is introduced.</span> Notice, that the `aj.tfa_config.verify_totp[userid]` is set within the separate worker and this variable is shared. This array is checked before giving the session to the user. Race condition is therefore a possibility, because this variable assignment is done without restrictions asynchronously and in a separate worker thread.
+<span style="color:orange;">And this is the exact point where the vulnerability is introduced.</span> Notice, that the `aj.tfa_config.verify_totp[userid]` is set within the separate worker and this variable is shared. This array is checked before giving the session to the user. Race condition is therefore a possibility, because this variable assignment is done without restrictions asynchronously and in a separate worker thread. User's TFA state can be desynchronized, as the variable is shared among different threads.
 
 Once the legitimate user logs in, the TFA state for them will be set to `True` for a short period of time. This in turn means, that if the attacker is constantly trying to brute-force the TFA code (by abusing the first way to bypass it), they will guess the TFA code also when the legit user provides it.
 
@@ -243,6 +245,8 @@ While the user's TFA state is True (legitimate user logs in), attacking TFA code
 The ajenti control panel allows all users to execute commands as a part of intented functionality, so authentication bypass is a full system compromise and allows network pivot.
 
 This extremely similar example is explained more deeply by Portswigger in the [Race Condition blog post](https://portswigger.net/web-security/race-conditions).
+
+Note, that since the shared TFA variable can be desyncrhonized, and arbitrary user's TFA state can be forced to False anytime. When the attacker attempts to directly call the TFA endpoint with their incorrect brute force attempts, the TFA state MIGHT be desynchonized and forced to False, while at the same time legitimate user attempts to login. This will make the legitimate user unable to login that attempt and it heavily depends on the timings of the login and the malicious request. In that case, victim user will need to provide TFA code again to login. 
 
 ### Unauthenticated single request Denial of Service
 
