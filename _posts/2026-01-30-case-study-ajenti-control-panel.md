@@ -6,7 +6,7 @@ tags: Race-Condition Authentication-Bypass DoS
 ---
 
 The new "Case study" blog series is aimed to present security research for a particular software, protocol or system.
-Its purpose is to demonstrate how a single, average but a dedicated attacker might approach and dismantle a certain high profile attack surface. The blog series will focus on critical issues, such as pre authentication and privilege escalation vulnerabilities.
+Its purpose is to demonstrate how a single, average but a dedicated attacker might approach a certain attack surface. The blog series will focus on critical issues, such as pre authentication and privilege escalation vulnerabilities.
 
 The first blog in the series relates to [Ajenti Control Panel](https://github.com/ajenti/ajenti), a Python based server admin panel designed to be run on Linux systems. It's used to administer servers, deploy websites and much more. The identified and disclosed vulnerabilities include:
 
