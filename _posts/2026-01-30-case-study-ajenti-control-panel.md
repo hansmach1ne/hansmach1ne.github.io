@@ -10,7 +10,7 @@ Its purpose is to demonstrate how a single, average but a dedicated attacker mig
 
 The first blog in the series relates to [Ajenti Control Panel](https://github.com/ajenti/ajenti), a Python based server admin panel designed to be run on Linux systems. It's used to administer servers, deploy websites and much more. The identified and disclosed vulnerabilities include:
 
-- CVE-2026-40179 - Password based authentication bypass by doing nothing at all
+- CVE-2026-40177 - Password based authentication bypass by doing nothing at all
 - CVE-2026-40178 - Two ways to bypass Two Factor Authentication
 - Incoming CVE - Unauthenticated single request Denial of Service
 
