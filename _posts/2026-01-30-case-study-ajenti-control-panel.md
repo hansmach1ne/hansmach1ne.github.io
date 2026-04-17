@@ -12,7 +12,7 @@ The first blog in the series relates to [Ajenti Control Panel](https://github.co
 
 - CVE-2026-40177 - Password based authentication bypass by doing nothing at all
 - CVE-2026-40178 - Two ways to bypass Two Factor Authentication
-- Incoming CVE - Unauthenticated single request Denial of Service
+- Bonus: Unauthenticated single request Denial of Service
 
 Note, these vulnerabilities are reported to and mitigated by the vendor several months ago. CVE assignment for these vulnerabilities is on hold, as CVE reporting on [Mitre CVEForm](https://cveform.mitre.org/) website seems to be delayed.
 
