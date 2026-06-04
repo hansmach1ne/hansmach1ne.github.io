@@ -1,5 +1,5 @@
 ---
-title: "Case study: Ajenti Control Panel"
+title: "Case study: Attacking Ajenti Control Panel Authentication"
 date: 2026-01-21 11:00:00 +0800
 categories: [Case study]
 tags: Race-Condition Authentication-Bypass DoS
